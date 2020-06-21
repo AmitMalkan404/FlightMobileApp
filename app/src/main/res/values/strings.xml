@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">FlightMobileApp</string>
+    <string name="connect">Connect</string>
+    <string name="type_url">Type URL</string>
+    <string name="clear_all">Clear All</string>
+    <string name="get_screenshot">Get Screenshot</string>
+    <string name="let_s_go">Let\'s Go</string>
+</resources>

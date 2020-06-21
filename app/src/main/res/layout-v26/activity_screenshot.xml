@@ -15,28 +15,20 @@
         android:layout_marginRight="32dp"
         android:text="0.0"
         android:textSize="30sp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintEnd_toStartOf="@+id/rudder"
         app:layout_constraintTop_toBottomOf="@+id/throttle"
         tools:ignore="MissingConstraints" />
 
     <ImageView
         android:id="@+id/image"
-        android:layout_width="366dp"
-        android:layout_height="212dp"
-        app:layout_constraintBottom_toTopOf="@+id/lets_go_button"
+        android:layout_width="398dp"
+        android:layout_height="221dp"
+        app:layout_constraintBottom_toTopOf="@+id/guideline"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@tools:sample/avatars" />
-
-    <Button
-        android:id="@+id/lets_go_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/let_s_go"
-        app:layout_constraintBottom_toTopOf="@+id/guideline"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 
     <io.github.controlwear.virtual.joystick.android.JoystickView
         android:id="@+id/joystickView"
@@ -46,8 +38,9 @@
         app:JV_borderColor="#292827"
         app:JV_buttonColor="#464443"
         app:JV_fixedCenter="true"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guideline" />
 
@@ -80,7 +73,7 @@
         android:max="100"
         android:min="-100"
         android:progress="0"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/joystickView"
@@ -89,17 +82,16 @@
     <SeekBar
         android:id="@+id/throttle"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:max="100"
+        android:layout_height="200dp"
+        android:max="1"
         android:min="0"
-        android:orientation="vertical"
         android:progress="0"
-        android:rotation="270"
-        app:layout_constraintBottom_toBottomOf="@+id/joystickView"
+        android:rotation="90"
+        app:layout_constraintBottom_toTopOf="@+id/guideline2"
         app:layout_constraintEnd_toStartOf="@+id/joystickView"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/joystickView"
+        app:layout_constraintTop_toTopOf="@+id/guideline"
         tools:ignore="MissingConstraints" />
 
     <TextView
@@ -121,7 +113,16 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintGuide_begin="365dp"
+        app:layout_constraintGuide_begin="310dp"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/guideline2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintGuide_begin="593dp"
         app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

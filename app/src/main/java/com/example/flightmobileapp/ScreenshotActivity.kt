@@ -1,26 +1,16 @@
 package com.example.flightmobileapp
 
-import android.content.Intent
 import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProvider
 import com.example.flightmobileapp.databinding.ActivityMainBinding
-import com.example.flightmobileapp.db.UrlDataBase
-import com.example.flightmobileapp.db.UrlRepository
 import com.example.flightmobileapp.viewmodel.UrlViewModel
-import com.example.flightmobileapp.viewmodel.UrlViewModelFactory
 import com.google.gson.GsonBuilder
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.activity_screenshot.*
 import kotlinx.coroutines.*
-import okhttp3.Dispatcher
 
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -28,8 +18,6 @@ import retrofit2.Callback
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import java.util.*
-import kotlin.concurrent.timer
 
 class ScreenshotActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -44,8 +32,8 @@ class ScreenshotActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_screenshot)
         // Amits:
-        val seekBar1Text = findViewById<TextView>(R.id.seekBar1Text)
-        val seekBar1 = findViewById<SeekBar>(R.id.seekBar1)
+        val seekBar1Text = findViewById<TextView>(R.id.rudderText)
+        val seekBar1 = findViewById<SeekBar>(R.id.rudder)
         val joyStickX = findViewById<TextView>(R.id.joyStickX)
         val joyStickY = findViewById<TextView>(R.id.joyStickY)
         setJoystick()
@@ -142,7 +130,7 @@ class ScreenshotActivity : AppCompatActivity() {
                             val I = response?.body()?.byteStream()
                             val B = BitmapFactory.decodeStream(I)
                             runOnUiThread {
-                                x.setImageBitmap(B)
+                                image.setImageBitmap(B)
                             }
                         }
                     }

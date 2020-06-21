@@ -89,16 +89,17 @@
     <SeekBar
         android:id="@+id/throttle"
         android:layout_width="0dp"
-        android:layout_height="200dp"
-        android:max="1"
+        android:layout_height="0dp"
+        android:max="100"
         android:min="0"
+        android:orientation="vertical"
         android:progress="0"
-        android:rotation="90"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:rotation="270"
+        app:layout_constraintBottom_toBottomOf="@+id/joystickView"
         app:layout_constraintEnd_toStartOf="@+id/joystickView"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/guideline"
+        app:layout_constraintTop_toTopOf="@+id/joystickView"
         tools:ignore="MissingConstraints" />
 
     <TextView

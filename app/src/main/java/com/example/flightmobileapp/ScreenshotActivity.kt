@@ -34,16 +34,32 @@ class ScreenshotActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_screenshot)
         // Amits:
-        val seekBar1Text = findViewById<TextView>(R.id.rudderText)
-        val seekBar1 = findViewById<SeekBar>(R.id.rudder)
+        val rudderText = findViewById<TextView>(R.id.rudderText)
+        val rudderBar = findViewById<SeekBar>(R.id.rudder)
+        val throttleText = findViewById<TextView>(R.id.throttleText)
+        val throttleBar = findViewById<SeekBar>(R.id.throttle)
         val joyStickX = findViewById<TextView>(R.id.joyStickX)
         val joyStickY = findViewById<TextView>(R.id.joyStickY)
         setJoystick()
-        seekBar1.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        rudderBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
-                val rudder1 = p1.toFloat()
-                rudder = (rudder1 / 100)
-                seekBar1Text.text = rudder.toString()
+                val rudder1 = p1.toDouble()
+                rudder = (rudder1/100).toFloat()
+                rudderText.text = rudder.toString()
+            }
+
+            override fun onStartTrackingTouch(p0: SeekBar) {
+            }
+
+            override fun onStopTrackingTouch(p0: SeekBar) {
+            }
+        })
+
+        throttleBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
+                val throttle1 = p1.toDouble()
+                throttle = (throttle1/100).toFloat()
+                throttleText.text = throttle.toString()
             }
 
             override fun onStartTrackingTouch(p0: SeekBar) {
@@ -62,32 +78,35 @@ class ScreenshotActivity : AppCompatActivity() {
     private fun setJoystick() {
         var changeFlag = false
         val joystick = joystickView.right
-        joystickView.setOnMoveListener { angle, strength ->
-            val jsX = joystickView.normalizedX.toFloat()
-            val jsY = joystickView.normalizedY.toFloat()
-            joyStickX.text = ((jsX - 50) / 100).toString()
-            joyStickY.text = ((jsY - 50) / 100).toString()
-
-
-            val toSetElavtor = (kotlin.math.cos(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
-            val toSetAileron = (kotlin.math.sin(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
-
-            if ((toSetElavtor > 1.01 * elevator) || (toSetElavtor < 0.99 * elevator)) {
-                changeFlag = true
-                elevator = toSetElavtor
+        joystickView.setOnMoveListener{
+                angle, strength ->
+            val jsX = joystickView.normalizedX.toDouble()
+            val jsY = joystickView.normalizedY.toDouble()
+            joyStickX.text = ((jsX - 50)/50).toString()
+            val y = (-(jsY - 50)/50)
+            if (y == 0.0){
+                joyStickY.text = "0.0"
             }
-            if ((toSetAileron > 1.01 * aileron) || (toSetAileron < 0.99 * aileron)) {
-                changeFlag = true
-                aileron = toSetAileron
+            else{
+                joyStickY.text = y.toString()
             }
 
-            if (changeFlag) {
-//                //sends the changes
-                sendCommand()
+
+            val toSetElevator = kotlin.math.cos(Math.toRadians(angle.toDouble())) * strength / 100
+            val toSetAileron = kotlin.math.sin(Math.toRadians(angle.toDouble())) * strength / 100
+
+            if((toSetElevator > 1.01 * elevator) || (toSetElevator < 0.99 * elevator)) {
+                changeFlag = true
+                elevator = toSetElevator.toFloat()
+            }
+            if((toSetAileron > 1.01 * aileron) || (toSetAileron < 0.99 * aileron)) {
+                changeFlag = true
+                aileron = toSetAileron.toFloat()
+            }
+
+            if(changeFlag) {
                 //sends the changes
-//                CoroutineScope(Dispatchers.IO).launch {
-//                    sendCommand()
-//                }
+                sendCommand()
                 changeFlag = false
             }
         }

@@ -47,12 +47,14 @@ class ScreenshotActivity : AppCompatActivity() {
                 val rudder1 = p1.toDouble()
                 rudder = (rudder1/100).toFloat()
                 rudderText.text = rudder.toString()
+                rudder*=100
             }
 
             override fun onStartTrackingTouch(p0: SeekBar) {
             }
 
             override fun onStopTrackingTouch(p0: SeekBar) {
+                sendCommand()
             }
         })
 
@@ -61,12 +63,14 @@ class ScreenshotActivity : AppCompatActivity() {
                 val throttle1 = p1.toDouble()
                 throttle = (throttle1/100).toFloat()
                 throttleText.text = throttle.toString()
+                throttle*=100
             }
 
             override fun onStartTrackingTouch(p0: SeekBar) {
             }
 
             override fun onStopTrackingTouch(p0: SeekBar) {
+                sendCommand()
             }
         })
         getScreenShot()
@@ -93,8 +97,8 @@ class ScreenshotActivity : AppCompatActivity() {
             }
 
 
-            val toSetElevator = kotlin.math.cos(Math.toRadians(angle.toDouble())) * strength / 100
-            val toSetAileron = kotlin.math.sin(Math.toRadians(angle.toDouble())) * strength / 100
+            val toSetElevator = (kotlin.math.cos(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
+            val toSetAileron = (kotlin.math.sin(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
 
             if((toSetElevator > 1.01 * elevator) || (toSetElevator < 0.99 * elevator)) {
                 changeFlag = true
@@ -232,35 +236,26 @@ class ScreenshotActivity : AppCompatActivity() {
         val myUrl = intent.getStringExtra("myUrl")
         val name = myUrl
         println("throttle:$throttle, rudder:$rudder, aileron:$aileron, elevator:$elevator")
-        val command = Command(
-            aileron / 100.0, elevator / 100.0,
+        val command = Command(aileron / 100.0, elevator / 100.0,
             rudder / 100.0, throttle / 100.0
         )
-        val gson = GsonBuilder()
-            .setLenient()
-            .create()
+        val gson = GsonBuilder().setLenient().create()
 //            val retrofit = Retrofit.Builder()
 //                .baseUrl("http://10.0.2.2:4659/")
 //                .addConverterFactory(GsonConverterFactory.create(gson))
 //                .build()
-        val retrofit = Retrofit.Builder()
-            .baseUrl(name)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
+        val retrofit = Retrofit.Builder().baseUrl(name)
+            .addConverterFactory(GsonConverterFactory.create(gson)).build()
         val api = retrofit.create(Api::class.java)
         var body = api.sendCommand(command).enqueue(object : Callback<ResponseBody> {
-            override fun onResponse(
-                call: Call<ResponseBody>,
-                response: Response<ResponseBody>
-            ) {
+            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.code() !in 400..598) {
                     // ok response
                 } else {
                     val toast = Toast.makeText(applicationContext, "Delay getting feedback from simulator",Toast.LENGTH_SHORT)
                     //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
                     toast.show()
-                    var string = "Server error: " + response.code().toString() + ", " +
-                            response.message()
+                    var string = "Server error: " + response.code().toString() + ", " + response.message()
                     println(string)
                 }
             }

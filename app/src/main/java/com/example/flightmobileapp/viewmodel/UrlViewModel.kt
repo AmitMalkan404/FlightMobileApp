@@ -96,30 +96,26 @@ class UrlViewModel(private val repository: UrlRepository) : ViewModel(),Observab
                 insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
             }
             //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
-            val gson = GsonBuilder()
-                .setLenient()
-                .create()
+            val gson = GsonBuilder().setLenient().create()
 //            val retrofit = Retrofit.Builder()
 //                .baseUrl("http://10.0.2.2:37819/")
 //                .addConverterFactory(GsonConverterFactory.create(gson))
 //                .build()
-            val retrofit = Retrofit.Builder()
-                .baseUrl(name)
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .build()
+            val retrofit = Retrofit.Builder().baseUrl(name).addConverterFactory(GsonConverterFactory
+                .create(gson)).build()
             val api = retrofit.create(Api::class.java)
-            println(name)
+            //println(name)
             val body = api.getImg().enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                    if(response.isSuccessful){
-                        //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
-                        statusMessage.value = Event("Connected!")
+                    if(response.code() !in 400..598){
                         isConnected.value = true
+                        //statusMessage.value = Event("Connected!")
+                    } else{
+                        statusMessage.value = Event("Didnt managed to connect!!")
                     }
-                    statusMessage.value = Event("Connected!")
-                    isConnected.value = true
+//                    statusMessage.value = Event("Connected!")
+//                    isConnected.value = true
                 }
-
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     //connectFlag = false
                     //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
@@ -165,33 +161,4 @@ class UrlViewModel(private val repository: UrlRepository) : ViewModel(),Observab
 
     override fun addOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
     }
-//    fun tryToConnect(myUrl: String): Boolean {
-//        try{
-//            val gson = GsonBuilder()
-//                .setLenient()
-//                .create()
-//            val retrofit = Retrofit.Builder()
-//                .baseUrl("http://10.0.2.2:37819/")
-//                .addConverterFactory(GsonConverterFactory.create(gson))
-//                .build()
-//            val api = retrofit.create(Api::class.java)
-//            val body = api.getImg().enqueue(object : Callback<ResponseBody> {
-//                override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-//                    if(response.isSuccessful){
-//                        statusMessage.value = Event("Connected!")
-//                    }
-//                }
-//
-//                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-//                    statusMessage.value = Event("No")
-//                }
-//            })
-//            return true
-//        }
-//        catch(e: Exception)
-//        {
-//            return false
-//        }
-//
-//    }
 }

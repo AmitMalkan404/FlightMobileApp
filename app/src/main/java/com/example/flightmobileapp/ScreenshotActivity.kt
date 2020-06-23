@@ -3,6 +3,7 @@ package com.example.flightmobileapp
 import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Gravity
 import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
@@ -143,12 +144,17 @@ class ScreenshotActivity : AppCompatActivity() {
                             runOnUiThread {
                                 image.setImageBitmap(B)
                             }
+                        }else{
+                            val toast = Toast.makeText(applicationContext, "Delay Getting Screenshot",Toast.LENGTH_SHORT)
+                            //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                            toast.show()
                         }
                     }
 
                     override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        //connectFlag = false
-                        //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
+                        val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect",Toast.LENGTH_SHORT)
+                        //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                        toast.show()
                     }
                 })
             }
@@ -231,6 +237,9 @@ class ScreenshotActivity : AppCompatActivity() {
                 if (response.code() !in 400..598) {
                     // ok response
                 } else {
+                    val toast = Toast.makeText(applicationContext, "Delay getting feedback from simulator",Toast.LENGTH_SHORT)
+                    //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                    toast.show()
                     var string = "Server error: " + response.code().toString() + ", " +
                             response.message()
                     println(string)
@@ -240,7 +249,9 @@ class ScreenshotActivity : AppCompatActivity() {
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                 //connectFlag = false
                 //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
-                Toast.makeText(applicationContext, "Server failed", Toast.LENGTH_LONG).show()
+                val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect",Toast.LENGTH_SHORT)
+                //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                toast.show()
                 println(t.message)
             }
         })

@@ -115,14 +115,15 @@ class UrlViewModel(private val repository: UrlRepository) : ViewModel(),Observab
                         //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
                         statusMessage.value = Event("Connected!")
                         isConnected.value = true
-
                     }
+                    statusMessage.value = Event("Connected!")
+                    isConnected.value = true
                 }
 
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     //connectFlag = false
                     //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
-                    statusMessage.value = Event("No")
+                    statusMessage.value = Event("Could Not Connect. Try Again")
                 }
             })
             typeURL.value = null

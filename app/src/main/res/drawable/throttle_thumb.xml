@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--<selector xmlns:android="http://schemas.android.com/apk/res/android">-->
+<!--    <item>-->
+<!--        <shape>-->
+<!--            <gradient-->
+<!--                android:startColor="#34373C"-->
+<!--                android:centerColor="#888883"-->
+<!--                android:endColor="#34373C"-->
+<!--                />-->
+<!--            <stroke android:color="#000000" android:width="8dp"/>-->
+<!--        </shape>-->
+<!--    </item>-->
+<!--</selector>-->
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid
+                android:color="@android:color/transparent"/>
+            <size
+                android:width="48dp"
+                android:height="20dp"
+                />
+        </shape>
+    </item>
+
+    <item android:drawable="@drawable/throttle_icon"/>
+</layer-list>

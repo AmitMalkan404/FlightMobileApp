@@ -74,7 +74,14 @@ class UrlViewModel(private val repository: UrlRepository) : ViewModel(),Observab
             }
         })
     }
-
+    fun checkIfExist(myUrl : String) : Boolean {
+        for (url in urls.value!!) {
+            if (myUrl.equals(url.name)) {
+                delete(url)
+            }
+        }
+        return false
+    }
 
     fun connect(){
         if(typeURL.value == null) {
@@ -85,7 +92,10 @@ class UrlViewModel(private val repository: UrlRepository) : ViewModel(),Observab
             val name = typeURL.value!!
             typeURLtemp = name
             var connectFlag : Boolean = true
-            insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
+            if(!checkIfExist(typeURLtemp)){
+                insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
+            }
+            //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
             val gson = GsonBuilder()
                 .setLenient()
                 .create()
@@ -98,6 +108,7 @@ class UrlViewModel(private val repository: UrlRepository) : ViewModel(),Observab
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .build()
             val api = retrofit.create(Api::class.java)
+            println(name)
             val body = api.getImg().enqueue(object : Callback<ResponseBody> {
                 override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                     if(response.isSuccessful){
@@ -144,6 +155,9 @@ class UrlViewModel(private val repository: UrlRepository) : ViewModel(),Observab
             repository.insert(urlFile)
         statusMessage.value = Event("Url Added Successfully")
         }
+    fun delete(urlFile: UrlFile) :Job = viewModelScope.launch {
+        repository.delete(urlFile)
+    }
 
     override fun removeOnPropertyChangedCallback(callback: Observable.OnPropertyChangedCallback?) {
     }

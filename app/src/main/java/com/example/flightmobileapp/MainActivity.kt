@@ -35,16 +35,15 @@ class MainActivity : AppCompatActivity() {
         binding.myViewModel = urlViewModel
         binding.lifecycleOwner = this
         initRecycleView()
-
         urlViewModel.message.observe(this, Observer {
             it.getContentIfNotHandled()?.let {
                 Toast.makeText(this, it, Toast.LENGTH_LONG).show()
             }
         })
-
         urlViewModel.isConnected.observe(this, Observer {
             if(it){
-                val myUrl = urlViewModel.typeURLtemp.toString()
+                //val myUrl = urlViewModel.typeURLtemp.toString()
+                val myUrl = urlViewModel.typeURLtemp
                 val intent = Intent(this,ScreenshotActivity::class.java)
                 intent.putExtra("myUrl", myUrl)
                 startActivity(intent)
@@ -57,7 +56,6 @@ class MainActivity : AppCompatActivity() {
         binding.urlRecycleView.adapter = adapter
         displayUrlsList()
     }
-
     private fun displayUrlsList() {
         urlViewModel.urls.observe(this, Observer {
             Log.i("MYTAG", it.toString())
@@ -69,12 +67,4 @@ class MainActivity : AppCompatActivity() {
         //Toast.makeText(this, "selected URL is ${urlFile.name}", Toast.LENGTH_LONG).show()
         urlViewModel.initUrlTextClicked(urlFile)
     }
-
-//    fun okMessage(){
-//        Toast.makeText(this,"Yes!",Toast.LENGTH_LONG).show()
-//    }
-//    fun badMessage(){
-//        Toast.makeText(this,"No!",Toast.LENGTH_LONG).show()
-//    }
-
 }

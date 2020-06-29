@@ -3,6 +3,8 @@ package com.example.flightmobileapp
 import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.Gravity
 import android.widget.SeekBar
 import android.widget.TextView
@@ -25,12 +27,16 @@ import retrofit2.converter.gson.GsonConverterFactory
 class ScreenshotActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var urlViewModel: UrlViewModel
-    private lateinit var adapter: MyRecyclerViewAdapter;
+    private lateinit var adapter: MyRecyclerViewAdapter
+//    private var delaySendCommand : Boolean = false
+//    private var lostConnWithSim : Boolean = false
+    private var delaySendCommand : Int = 0
+    private var delayGetCommand : Int = 0
     private var aileron : Float = 0.0F
     private var elevator: Float = 0.0F
     private var throttle: Float = 0.0F
     private var rudder: Float = 0.0F
-
+    private var ScreenShotFlag : Boolean = true
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_screenshot)
@@ -45,41 +51,49 @@ class ScreenshotActivity : AppCompatActivity() {
         rudderBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
                 val rudder1 = p1.toDouble()
-                rudder = (rudder1/100).toFloat()
-                rudderText.text = rudder.toString()
-                rudder*=100
+                if(kotlin.math.abs((rudder1/100) - rudder) > 0.02){
+                    rudder = (rudder1/100).toFloat()
+                    rudderText.text = rudder.toString()
+                    //rudder*=100
+                    CoroutineScope(Dispatchers.IO).launch {
+                        sendCommand()
+                    }
+                }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar) {
             }
 
             override fun onStopTrackingTouch(p0: SeekBar) {
-                sendCommand()
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    sendCommand()
+//                }
             }
         })
-
         throttleBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(p0: SeekBar, p1: Int, p2: Boolean) {
                 val throttle1 = p1.toDouble()
-                throttle = (throttle1/100).toFloat()
-                throttleText.text = throttle.toString()
-                throttle*=100
+                if(kotlin.math.abs((throttle1/100) - throttle) > 0.01) {
+                    throttle = (throttle1/100).toFloat()
+                    throttleText.text = throttle.toString()
+                    //throttle*=100
+                    CoroutineScope(Dispatchers.IO).launch {
+                        sendCommand()
+                    }
+                }
             }
 
             override fun onStartTrackingTouch(p0: SeekBar) {
             }
 
             override fun onStopTrackingTouch(p0: SeekBar) {
-                sendCommand()
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    sendCommand()
+//                }
             }
         })
-        getScreenShot()
-        // Amit Ends.
-//        lets_go_button.setOnClickListener{
-//            getScreenShot()
-//        }
+        //getScreenShot()
     }
-
     private fun setJoystick() {
         var changeFlag = false
         val joystick = joystickView.right
@@ -95,34 +109,45 @@ class ScreenshotActivity : AppCompatActivity() {
             else{
                 joyStickY.text = y.toString()
             }
+            val toSetElevator = (kotlin.math.sin(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
+            val toSetAileron = (kotlin.math.cos(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
 
-
-            val toSetElevator = (kotlin.math.cos(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
-            val toSetAileron = (kotlin.math.sin(Math.toRadians(angle.toDouble())) * strength / 100).toFloat()
-
-            if((toSetElevator > 1.01 * elevator) || (toSetElevator < 0.99 * elevator)) {
+            if(kotlin.math.abs(toSetElevator - elevator) > 0.02) {
                 changeFlag = true
-                elevator = toSetElevator.toFloat()
+                elevator = toSetElevator
             }
-            if((toSetAileron > 1.01 * aileron) || (toSetAileron < 0.99 * aileron)) {
+            if(kotlin.math.abs(toSetAileron - aileron) > 0.02) {
                 changeFlag = true
-                aileron = toSetAileron.toFloat()
+                aileron = toSetAileron
             }
+//            if((toSetElevator > 1.02 * elevator) || (toSetElevator < 0.98 * elevator)) {
+//                changeFlag = true
+//                elevator = toSetElevator
+//            }
+//            if((toSetAileron > 1.02 * aileron) || (toSetAileron < 0.98 * aileron)) {
+//                changeFlag = true
+//                aileron = toSetAileron
+//            }
 
             if(changeFlag) {
                 //sends the changes
-                sendCommand()
+//                CoroutineScope(Dispatchers.IO).launch {
+//                    sendCommand()
+//                    //delay(250)
+//                }
+                CoroutineScope(Dispatchers.IO).launch {
+                    sendCommand()
+                }
                 changeFlag = false
             }
         }
     }
-
     private fun setSeekBar(seekBar: SeekBar) {
 
     }
-
     override fun onStart() {
         super.onStart()
+
     }
 
     override fun onStop() {
@@ -131,36 +156,40 @@ class ScreenshotActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        ScreenShotFlag = false
     }
-
-
+    override fun onResume() {
+        super.onResume()
+        ScreenShotFlag = true
+        //getScreenShot()
+        CoroutineScope(Dispatchers.IO).launch {
+            getScreenShot()
+        }
+    }
     fun getScreenShot() {
 
+        var isDelay = false
+        var lostConn = false
         val intent = getIntent()
         val myUrl = intent.getStringExtra("myUrl")
-        val name = myUrl
-        val gson = GsonBuilder()
-            .setLenient()
-            .create()
-//            val retrofit = Retrofit.Builder()
-//                .baseUrl("http://10.0.2.2:37819/")
-//                .addConverterFactory(GsonConverterFactory.create(gson))
-//                .build()
+        val gson = GsonBuilder().setLenient().create()
         val retrofit = Retrofit.Builder()
-            .baseUrl(name)
-            .addConverterFactory(GsonConverterFactory.create(gson))
-            .build()
+            .baseUrl(myUrl).addConverterFactory(GsonConverterFactory.create(gson)).build()
         val api = retrofit.create(Api::class.java)
         CoroutineScope(Dispatchers.IO).launch {
-            while (true) {
-                println(name)
-                delay(250)
+            //var int : Int = 0
+            while (ScreenShotFlag) {
+                //int+= 1
+                //println(name)
+                delay(1000)
+                //println(int)
                 var body = api.getImg().enqueue(object : Callback<ResponseBody> {
                     override fun onResponse(
                         call: Call<ResponseBody>,
                         response: Response<ResponseBody>
                     ) {
                         if (response.isSuccessful) {
+                            delayGetCommand = 0
                             //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
                             val I = response?.body()?.byteStream()
                             val B = BitmapFactory.decodeStream(I)
@@ -168,106 +197,166 @@ class ScreenshotActivity : AppCompatActivity() {
                                 image.setImageBitmap(B)
                             }
                         }else{
-                            val toast = Toast.makeText(applicationContext, "Delay Getting Screenshot",Toast.LENGTH_SHORT)
+                            delayGetCommand+=1
+                            if(delayGetCommand == 10){
+                                val toast = Toast.makeText(applicationContext, "Delay Getting Screenshot",Toast.LENGTH_LONG)
+                                //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                                toast.show()
+                            }
+                            if(delayGetCommand == 30){
+                                val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect(get)",Toast.LENGTH_LONG)
+                                //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                                toast.show()
+                            }
+                        }
+                    }
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        delayGetCommand+=1
+                        if(delayGetCommand == 20){
+                            val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect(get)",Toast.LENGTH_LONG)
                             //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
                             toast.show()
                         }
-                    }
-
-                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                        val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect",Toast.LENGTH_SHORT)
-                        //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
-                        toast.show()
                     }
                 })
             }
         }
     }
-
-//    fun sendCommand() {
+//    fun getScreenShot() {
+//        var isDelay = false
+//        var lostConn = false
 //        val intent = getIntent()
 //        val myUrl = intent.getStringExtra("myUrl")
-//        val name = myUrl
-//        println("aileron:$aileron, rudder:$rudder, elevator:$elevator, throttle:$throttle")
-//        val json =
-//            "{\"aileron\": $aileron,\n \"elevator\": $elevator,\n \"rudder\": $rudder,\n \"throttle\": $throttle\n}"
-//        val requestBody = RequestBody.create(MediaType.parse("application/json"),json)
-//        val gson = GsonBuilder()
-//            .setLenient()
-//            .create()
-////            val retrofit = Retrofit.Builder()
-////                .baseUrl("http://127.0.0.1:50931/")
-////                .addConverterFactory(GsonConverterFactory.create(gson))
-////                .build()
+//        val gson = GsonBuilder().setLenient().create()
 //        val retrofit = Retrofit.Builder()
-//            .baseUrl(name)
-//            .addConverterFactory(GsonConverterFactory.create(gson))
-//            .build()
+//            .baseUrl(myUrl).addConverterFactory(GsonConverterFactory.create(gson)).build()
 //        val api = retrofit.create(Api::class.java)
-//        println(name)
-//        var body = api.sendCommand(requestBody).enqueue(object : Callback<ResponseBody> {
-//            override fun onResponse(
-//                call: Call<ResponseBody>,
-//                response: Response<ResponseBody>
-//            ) {
-//                if (response.code() !in 400..598) {
-//                    // ok response
-//                    var string = "Server ok: " + response.code().toString() + ", " +
-//                            response.message()
-//                    println(string)
-//                } else {
-//                    var string = "Server error: " + response.code().toString() + ", " +
-//                            response.message()
-//                    println(string)
-//                }
+//        CoroutineScope(Dispatchers.IO).launch {
+//            //var int : Int = 0
+//            while (ScreenShotFlag) {
+//                //int+= 1
+//                //println(name)
+//                delay(250)
+//                //println(int)
+//                var body = api.getImg().enqueue(object : Callback<ResponseBody> {
+//                    override fun onResponse(
+//                        call: Call<ResponseBody>,
+//                        response: Response<ResponseBody>
+//                    ) {
+//                        lostConn = false
+//                        if (response.isSuccessful) {
+//                            isDelay = false
+//                            //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
+//                            val I = response?.body()?.byteStream()
+//                            val B = BitmapFactory.decodeStream(I)
+//                            runOnUiThread {
+//                                image.setImageBitmap(B)
+//                            }
+//                        }else{
+//                            if(!isDelay){
+//                                isDelay = true
+//                                val toast = Toast.makeText(applicationContext, "Delay Getting Screenshot",Toast.LENGTH_LONG)
+//                                //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+//                                toast.show()
+//                            }
+//                        }
+//                    }
+//                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+//                        isDelay = false
+//                        if(!lostConn){
+//                            lostConn = true
+//                            val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect(get)",Toast.LENGTH_LONG)
+//                            //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+//                            toast.show()
+//                        }
+//                    }
+//                })
 //            }
-//
-//            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-//                //connectFlag = false
-//                //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
-//                Toast.makeText(applicationContext, "Server failed", Toast.LENGTH_LONG).show()
-//                println(t.message)
-//            }
-//        })
+//        }
 //    }
-
     fun sendCommand() {
         val intent = getIntent()
         val myUrl = intent.getStringExtra("myUrl")
-        val name = myUrl
-        println("throttle:$throttle, rudder:$rudder, aileron:$aileron, elevator:$elevator")
-        val command = Command(aileron / 100.0, elevator / 100.0,
-            rudder / 100.0, throttle / 100.0
-        )
+        //println("throttle:$throttle, rudder:$rudder, aileron:$aileron, elevator:$elevator")
+        val command = Command(aileron, elevator, rudder, throttle)
         val gson = GsonBuilder().setLenient().create()
-//            val retrofit = Retrofit.Builder()
-//                .baseUrl("http://10.0.2.2:4659/")
-//                .addConverterFactory(GsonConverterFactory.create(gson))
-//                .build()
-        val retrofit = Retrofit.Builder().baseUrl(name)
+        val retrofit = Retrofit.Builder().baseUrl(myUrl)
             .addConverterFactory(GsonConverterFactory.create(gson)).build()
         val api = retrofit.create(Api::class.java)
         var body = api.sendCommand(command).enqueue(object : Callback<ResponseBody> {
             override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
                 if (response.code() !in 400..598) {
+                    delaySendCommand=0
                     // ok response
                 } else {
-                    val toast = Toast.makeText(applicationContext, "Delay getting feedback from simulator",Toast.LENGTH_SHORT)
-                    //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
-                    toast.show()
-                    var string = "Server error: " + response.code().toString() + ", " + response.message()
-                    println(string)
+                    delaySendCommand+=1
+                    if(delaySendCommand==10){
+                        val toast = Toast.makeText(applicationContext, "Delay getting feedback from simulator",Toast.LENGTH_SHORT)
+                        //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                        toast.show()
+                        //val string = "Server error: " + response.code().toString() + ", " + response.message()
+                        //println(string)
+                    }
+                    if(delaySendCommand==50){
+                        //connectFlag = false
+                        //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
+                        val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect(command)",Toast.LENGTH_SHORT)
+                        //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                        toast.show()
+                        //println(t.message)
+                    }
                 }
             }
-
             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                //connectFlag = false
-                //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
-                val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect",Toast.LENGTH_SHORT)
-                //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
-                toast.show()
-                println(t.message)
+                delaySendCommand+=1
+                if(delaySendCommand==50){
+                    //connectFlag = false
+                    //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
+                    val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect(command)",Toast.LENGTH_SHORT)
+                    //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+                    toast.show()
+                    //println(t.message)
+                }
             }
         })
     }
+//    fun sendCommand() {
+//        val intent = getIntent()
+//        val myUrl = intent.getStringExtra("myUrl")
+//        //println("throttle:$throttle, rudder:$rudder, aileron:$aileron, elevator:$elevator")
+//        val command = Command(aileron, elevator, rudder, throttle)
+//        val gson = GsonBuilder().setLenient().create()
+//        val retrofit = Retrofit.Builder().baseUrl(myUrl)
+//            .addConverterFactory(GsonConverterFactory.create(gson)).build()
+//        val api = retrofit.create(Api::class.java)
+//        var body = api.sendCommand(command).enqueue(object : Callback<ResponseBody> {
+//            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+//                lostConnWithSim = false
+//                if (response.code() !in 400..598) {
+//                    delaySendCommand = false
+//                    // ok response
+//                } else {
+//                    if(!delaySendCommand){
+//                        delaySendCommand = true
+//                        val toast = Toast.makeText(applicationContext, "Delay getting feedback from simulator",Toast.LENGTH_SHORT)
+//                        //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+//                        toast.show()
+//                        //val string = "Server error: " + response.code().toString() + ", " + response.message()
+//                        //println(string)
+//                    }
+//                }
+//            }
+//            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+//                if(!lostConnWithSim){
+//                    lostConnWithSim = true
+//                    //connectFlag = false
+//                    //insert(UrlFile(id = 0, name = name, isConnect = connectFlag))
+//                    val toast = Toast.makeText(applicationContext, "Lost connection with simulator\nPlease Reconnect(command)",Toast.LENGTH_SHORT)
+//                    //toast.setGravity(Gravity.TOP or Gravity.CENTER_HORIZONTAL, 430,20)
+//                    toast.show()
+//                    //println(t.message)
+//                }
+//            }
+//        })
+//    }
 }
